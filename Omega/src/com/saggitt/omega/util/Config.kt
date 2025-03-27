@@ -89,7 +89,7 @@ class Config(val context: Context) {
         }
     }
 
-    private val FILE_NAME = "neo_launcher_password.txt"
+    private val FILE_NAME = "neo_launcher_password"
 
     // 获取密码文件路径
     private fun getPasswordFile(): File {
@@ -98,31 +98,45 @@ class Config(val context: Context) {
 
     // 保存密码
     fun savePassword(password: String) {
-        checkFilePermissions(context)
-        val file = getPasswordFile()
-        try {
-            file.writeText(password)
-        } catch (e: IOException) {
-            e.message?.let { Log.e("Config", it) }
-            context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                .edit() { putString("password", password) }
-        }
+        saveFile(FILE_NAME, password)
     }
 
     // 读取密码（文件不存在返回 null）
     fun getPassword(): String? {
+        return getFile(FILE_NAME)
+    }
+
+    fun getFile(fileName: String): String? {
         checkFilePermissions(context)
-        val file = getPasswordFile()
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            fileName
+        )
         return if (file.exists()) {
             try {
                 file.readText()
             } catch (e: IOException) {
                 e.message?.let { Log.e("Config", it) }
                 context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    .getString("password", null)
+                    .getString("fileName", null)
             }
         } else {
             null
+        }
+    }
+
+    fun saveFile(fileName: String, data: String){
+        checkFilePermissions(context)
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            fileName
+        )
+        try {
+            file.writeText(data)
+        } catch (e: IOException) {
+            e.message?.let { Log.e("Config", it) }
+            context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .edit() { putString("password", data) }
         }
     }
 

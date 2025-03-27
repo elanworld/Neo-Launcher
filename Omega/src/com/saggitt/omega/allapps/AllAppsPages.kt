@@ -19,12 +19,16 @@
 package com.saggitt.omega.allapps
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.LauncherActivityInfo
+import android.os.Build
+import androidx.core.content.ContextCompat.startForegroundService
 import com.android.launcher3.AppFilter
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.ComponentKey
 import com.saggitt.omega.groups.CustomFilter
+import com.saggitt.omega.preferences.AppMonitorService
 import com.saggitt.omega.util.Config
 
 class AllAppsPages(
@@ -46,6 +50,8 @@ class AllAppsPages(
             appList.add(AppInfo(it, it.user, false))
         }
         reloadPages()
+        startForegroundService(context, Intent(context,AppMonitorService::class.java))
+
     }
 
     private fun reloadPages() {

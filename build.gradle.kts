@@ -254,6 +254,7 @@ dependencies {
     //Room Components
     implementation("androidx.room:room-runtime:$vRoom")
     implementation("androidx.room:room-ktx:$vRoom")
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
     kapt("androidx.room:room-compiler:$vRoom")
 
     // Recents lib dependency

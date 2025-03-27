@@ -27,18 +27,22 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.Utilities
 import com.android.quickstep.RecentsActivity
 import com.android.systemui.shared.system.QuickStepContract
 import com.saggitt.omega.blur.BlurWallpaperProvider
+import com.saggitt.omega.preferences.AppMonitorWorker
 import com.saggitt.omega.smartspace.OmegaSmartSpaceController
 import com.saggitt.omega.theme.ThemeManager
 import org.chickenhook.restrictionbypass.Unseal
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 
-class OmegaApp : Application() {
+class OmegaApp : Application() , androidx.work.Configuration.Provider {
     private val TAG = "OmegaApp"
 
     val activityHandler = ActivityHandler()
@@ -52,8 +56,20 @@ class OmegaApp : Application() {
         super.onCreate()
         instance = this
         QuickStepContract.sRecentsDisabled = !recentsEnabled
+        // 在应用启动时手动初始化 WorkManager
+        WorkManager.initialize(
+            this,
+            androidx.work.Configuration.Builder().build()
+        )
+
+        val workRequest = PeriodicWorkRequestBuilder<AppMonitorWorker>(2, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(baseContext).enqueue(workRequest)
     }
 
+    override fun getWorkManagerConfiguration(): androidx.work.Configuration {
+        return androidx.work.Configuration.Builder().build()
+    }
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

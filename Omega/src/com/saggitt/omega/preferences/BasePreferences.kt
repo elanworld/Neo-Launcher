@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.LauncherFiles
+import com.saggitt.omega.util.Config
 import com.saggitt.omega.util.dpToPx
 import com.saggitt.omega.util.pxToDp
 import org.json.JSONArray
@@ -34,6 +35,7 @@ import kotlin.reflect.KProperty
 abstract class BasePreferences(context: Context) :
     SharedPreferences.OnSharedPreferenceChangeListener {
     private val mContext = context
+    private val config = Config(context)
     val sharedPrefs = createPreferences()
     val onChangeMap: MutableMap<String, () -> Unit> = HashMap()
     val onChangeListeners: MutableMap<String, MutableSet<OmegaPreferences.OnPreferenceChangeListener>> =
@@ -416,10 +418,25 @@ abstract class BasePreferences(context: Context) :
         onChange: () -> Unit = doNothing
     ) :
         PrefDelegate<Set<String>>(key, defaultValue, onChange) {
-        override fun onGetValue(): Set<String> = sharedPrefs.getStringSet(getKey(), defaultValue)!!
+        override fun onGetValue(): Set<String> {
+            val data = config.getFile("neo_launcher_" + key)
+            return if (data != null) stringToSet(data) else sharedPrefs.getStringSet(
+                getKey(),
+                defaultValue
+            )!!
+        }
 
         override fun onSetValue(value: Set<String>) {
+            config.saveFile("neo_launcher_" + getKey(), setToString(value))
             edit { putStringSet(getKey(), value) }
+        }
+
+        fun stringToSet(data: String): Set<String> {
+            return if (data.isNotEmpty()) data.split("\n").toSet() else emptySet()
+        }
+
+        fun setToString(set: Set<String>): String {
+            return set.joinToString("\n")
         }
     }
 

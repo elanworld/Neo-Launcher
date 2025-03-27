@@ -19,10 +19,13 @@
 package com.saggitt.omega.preferences.views
 
 import android.app.AlertDialog
+import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
@@ -35,10 +38,11 @@ import com.saggitt.omega.PREFS_PROTECTED_APPS
 import com.saggitt.omega.PREFS_TRUST_APPS
 import com.saggitt.omega.util.Config
 import com.saggitt.omega.util.omegaPrefs
+import java.util.function.LongConsumer
 
 class PrefsDrawerFragment :
     BasePreferenceFragment(R.xml.preferences_drawer, R.string.title__general_drawer) {
-    private lateinit var config:Config
+    private lateinit var config: Config
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -52,9 +56,36 @@ class PrefsDrawerFragment :
 
             isVisible = Utilities.ATLEAST_R
         }
+        findPreference<SwitchPreference>("pref_exit_apps")?.apply {
+            onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
+                    val data = newValue as Boolean
+                    val runnable = Runnable() {
+                        config.saveFile("exit_setting", data.toString())
+                        isChecked = data
+                    }
+                    if (data) {
+                        runnable.run()
+                        requestUsagePermission(context)
+                    } else {
+                        isChecked = true // not work
+                        showPasswordDialog(runnable)
+                    }
+                    true
+                }
+        }
 
         findPreference<Preference>(PREFS_TRUST_APPS)?.apply {
             onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                val runnable = Runnable() {
+                    // 密码正确，启动目标Fragment
+                    val fragment = "com.saggitt.omega.preferences.views.HiddenAppsFragment"
+                    PreferencesActivity.startFragment(
+                        requireContext(),
+                        fragment,
+                        requireContext().resources.getString(R.string.title__drawer_hide_apps)
+                    )
+                }
                 if (
                     Utilities.getOmegaPrefs(requireContext()).enableProtectedApps &&
                     Utilities.ATLEAST_R
@@ -63,10 +94,10 @@ class PrefsDrawerFragment :
                         requireContext(),
                         getString(R.string.trust_apps_manager_name)
                     ) {
-                        showPasswordDialog()
+                        showPasswordDialog(runnable)
                     }
                 } else {
-                    showPasswordDialog()
+                    showPasswordDialog(runnable)
                 }
                 false
             }
@@ -88,7 +119,35 @@ class PrefsDrawerFragment :
         }
     }
 
-    private fun showPasswordDialog() {
+    // 检测是否已授权 PACKAGE_USAGE_STATS
+    fun hasUsageStatsPermission(context: Context): Boolean {
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                context.packageName
+            )
+        } else {
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                context.packageName
+            )
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    // 请求权限（如果未授权）
+    fun requestUsagePermission(context: Context) {
+        if (!hasUsageStatsPermission(context)) {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        }
+    }
+
+    private fun showPasswordDialog(runnable: Runnable = Runnable { }) {
         val context = requireContext()
 
         if (getStoredPassword() == null || getStoredPassword() == "") {
@@ -113,13 +172,7 @@ class PrefsDrawerFragment :
 
             // 验证密码
             if (verifyPassword(enteredPassword)) {
-                // 密码正确，启动目标Fragment
-                val fragment = "com.saggitt.omega.preferences.views.HiddenAppsFragment"
-                PreferencesActivity.startFragment(
-                    context,
-                    fragment,
-                    context.resources.getString(R.string.title__drawer_hide_apps)
-                )
+                runnable.run()
             } else {
                 Toast.makeText(context, "密码错误，请重试", Toast.LENGTH_SHORT).show()
             }

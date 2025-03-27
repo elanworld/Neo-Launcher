@@ -136,6 +136,12 @@
             app:iconSpaceReserved="false"
             app:title="@string/enable_protected_apps" />
 
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_exit_apps"
+            app:iconSpaceReserved="false"
+            app:title="turn on exit hidden apps" />
+
         <Preference
             android:key="pref_trust_auth"
             android:summary="Set password to protect Hidden app Setting page"
