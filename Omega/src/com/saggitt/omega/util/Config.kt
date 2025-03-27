@@ -18,20 +18,29 @@
 
 package com.saggitt.omega.util
 
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
+import android.net.Uri
 import android.os.Build
 import android.os.CancellationSignal
+import android.os.Environment
 import android.os.Process
+import android.provider.Settings
 import android.text.TextUtils
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import com.android.launcher3.AppFilter
 import com.android.launcher3.R
 import com.android.launcher3.Utilities
@@ -42,7 +51,9 @@ import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.PackageManagerHelper
 import com.saggitt.omega.allapps.CustomAppFilter
 import com.saggitt.omega.theme.ThemeOverride
-import java.util.*
+import java.io.File
+import java.io.IOException
+import java.util.Locale
 
 class Config(val context: Context) {
 
@@ -75,6 +86,59 @@ class Config(val context: Context) {
             apps.filter { filter.shouldShowApp(it.componentName, it.user) }
         } else {
             apps
+        }
+    }
+
+    private val FILE_NAME = "neo_launcher_password.txt"
+
+    // 获取密码文件路径
+    private fun getPasswordFile(): File {
+        return File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FILE_NAME)
+    }
+
+    // 保存密码
+    fun savePassword(password: String) {
+        checkFilePermissions(context)
+        val file = getPasswordFile()
+        try {
+            file.writeText(password)
+        } catch (e: IOException) {
+            e.message?.let { Log.e("Config", it) }
+            context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .edit() { putString("password", password) }
+        }
+    }
+
+    // 读取密码（文件不存在返回 null）
+    fun getPassword(): String? {
+        checkFilePermissions(context)
+        val file = getPasswordFile()
+        return if (file.exists()) {
+            try {
+                file.readText()
+            } catch (e: IOException) {
+                e.message?.let { Log.e("Config", it) }
+                context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    .getString("password", null)
+            }
+        } else {
+            null
+        }
+    }
+
+    fun checkFilePermissions(context: Context) {
+        // Check if the app has the necessary permissions
+        if (ContextCompat.checkSelfPermission(context, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            // If permission is not granted, show a message and redirect to settings
+            Toast.makeText(context, "You need to grant storage permissions to continue.", Toast.LENGTH_SHORT).show()
+
+            // Redirect user to the app's settings page where they can grant the permission
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+            context.startActivity(intent)
         }
     }
 
@@ -177,8 +241,8 @@ class Config(val context: Context) {
         fun isAppProtected(context: Context, componentKey: ComponentKey): Boolean {
             var result = false
             val protectedApps = ArrayList(
-                    Utilities.getOmegaPrefs(context).protectedAppsSet
-                            .map { Utilities.makeComponentKey(context, it) })
+                Utilities.getOmegaPrefs(context).protectedAppsSet
+                    .map { Utilities.makeComponentKey(context, it) })
 
             if (protectedApps.contains(componentKey)) {
                 result = true
@@ -187,36 +251,36 @@ class Config(val context: Context) {
         }
 
         private val PLACE_HOLDERS = arrayOf(
-                "com.android.phone",
-                "com.samsung.android.dialer",
-                "com.whatsapp",
-                "com.android.chrome",
-                "com.instagram.android",
-                "com.google.android.gm",
-                "com.facebook.orca",
-                "com.google.android.youtube",
-                "com.twitter.android",
-                "com.facebook.katana",
-                "com.google.android.calendar",
-                "com.yodo1.crossyroad",
-                "com.spotify.music",
-                "com.skype.raider",
-                "com.snapchat.android",
-                "com.viber.voip",
-                "com.google.android.deskclock",
-                "com.google.android.apps.photos",
-                "com.google.android.music",
-                "com.google.android.apps.genie.geniewidget",
-                "com.netflix.mediaclient",
-                "com.google.android.apps.maps",
-                "bbc.iplayer.android",
-                "com.android.settings",
-                "com.google.android.videos",
-                "com.amazon.mShop.android.shopping",
-                "com.microsoft.office.word",
-                "com.google.android.apps.docs",
-                "com.google.android.keep",
-                "com.google.android.talk"
+            "com.android.phone",
+            "com.samsung.android.dialer",
+            "com.whatsapp",
+            "com.android.chrome",
+            "com.instagram.android",
+            "com.google.android.gm",
+            "com.facebook.orca",
+            "com.google.android.youtube",
+            "com.twitter.android",
+            "com.facebook.katana",
+            "com.google.android.calendar",
+            "com.yodo1.crossyroad",
+            "com.spotify.music",
+            "com.skype.raider",
+            "com.snapchat.android",
+            "com.viber.voip",
+            "com.google.android.deskclock",
+            "com.google.android.apps.photos",
+            "com.google.android.music",
+            "com.google.android.apps.genie.geniewidget",
+            "com.netflix.mediaclient",
+            "com.google.android.apps.maps",
+            "bbc.iplayer.android",
+            "com.android.settings",
+            "com.google.android.videos",
+            "com.amazon.mShop.android.shopping",
+            "com.microsoft.office.word",
+            "com.google.android.apps.docs",
+            "com.google.android.keep",
+            "com.google.android.talk"
         )
 
         fun getPreviewAppInfos(context: Context): List<AppInfo> {
@@ -224,7 +288,7 @@ class Config(val context: Context) {
             val user = Process.myUserHandle()
             val appFilter = CustomAppFilter(context)
             val predefined = PLACE_HOLDERS
-                    .filter { PackageManagerHelper(context).isAppInstalled(it, user) }
+                .filter { PackageManagerHelper(context).isAppInstalled(it, user) }
                 .mapNotNull { launcherApps.getActivityList(it, user).firstOrNull() }
                 .asSequence()
             val randomized = launcherApps.getActivityList(null, Process.myUserHandle())

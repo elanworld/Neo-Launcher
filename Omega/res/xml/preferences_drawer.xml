@@ -137,6 +137,12 @@
             app:title="@string/enable_protected_apps" />
 
         <Preference
+            android:key="pref_trust_auth"
+            android:summary="Set password to protect Hidden app Setting page"
+            android:title="Auth"
+            app:iconSpaceReserved="false" />
+
+        <Preference
             android:key="pref_trust_apps"
             android:summary="@string/summary__drawer_hide_apps"
             android:title="@string/title__drawer_hide_apps"
