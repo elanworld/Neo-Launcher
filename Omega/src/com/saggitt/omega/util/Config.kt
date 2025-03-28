@@ -93,7 +93,10 @@ class Config(val context: Context) {
 
     // 获取密码文件路径
     private fun getPasswordFile(): File {
-        return File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FILE_NAME)
+        return File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            FILE_NAME
+        )
     }
 
     // 保存密码
@@ -112,20 +115,21 @@ class Config(val context: Context) {
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
             fileName
         )
-        return if (file.exists()) {
+        if (file.exists()) {
             try {
-                file.readText()
+                return file.readText()
             } catch (e: IOException) {
-                e.message?.let { Log.e("Config", it) }
-                context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    .getString("fileName", null)
+                e.message?.let {
+                    Log.e("Config", it)
+                }
+                Toast.makeText(context, "file read exception", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            null
         }
+        return context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .getString(fileName, null)
     }
 
-    fun saveFile(fileName: String, data: String){
+    fun saveFile(fileName: String, data: String) {
         checkFilePermissions(context)
         val file = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
@@ -134,26 +138,57 @@ class Config(val context: Context) {
         try {
             file.writeText(data)
         } catch (e: IOException) {
-            e.message?.let { Log.e("Config", it) }
-            context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                .edit() { putString("password", data) }
+            e.message?.let {
+                Log.e("Config", it)
+            }
+            Toast.makeText(context, "file save exception", Toast.LENGTH_SHORT).show()
+        }
+
+        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit() { putString(fileName, data) }
+    }
+
+    fun checkFilePermissions(context: Context, test: Boolean = false) {
+        // Check if the app has the necessary permissions
+        if (ContextCompat.checkSelfPermission(
+                context,
+                READ_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context,
+                WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            startPermissionAc()
+            return
+        }
+        if (test) {
+
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                "neo_launcher_test"
+            )
+            try {
+                file.writeText(file.toString())
+            } catch (ex: IOException) {
+                startPermissionAc()
+            }
         }
     }
 
-    fun checkFilePermissions(context: Context) {
-        // Check if the app has the necessary permissions
-        if (ContextCompat.checkSelfPermission(context, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(context, WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+    fun startPermissionAc() {
+        // If permission is not granted, show a message and redirect to settings
+        Toast.makeText(
+            context,
+            "You need to grant storage permissions to continue.",
+            Toast.LENGTH_SHORT
+        ).show()
 
-            // If permission is not granted, show a message and redirect to settings
-            Toast.makeText(context, "You need to grant storage permissions to continue.", Toast.LENGTH_SHORT).show()
-
-            // Redirect user to the app's settings page where they can grant the permission
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
-            context.startActivity(intent)
+        // Redirect user to the app's settings page where they can grant the permission
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
         }
+        context.startActivity(intent)
     }
 
     companion object {

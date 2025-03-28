@@ -43,6 +43,7 @@ import java.util.function.LongConsumer
 class PrefsDrawerFragment :
     BasePreferenceFragment(R.xml.preferences_drawer, R.string.title__general_drawer) {
     private lateinit var config: Config
+    val exit_str = "neo_launcher_exit_setting"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -61,7 +62,7 @@ class PrefsDrawerFragment :
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
                     val data = newValue as Boolean
                     val runnable = Runnable() {
-                        config.saveFile("exit_setting", data.toString())
+                        config.saveFile(exit_str, data.toString())
                         isChecked = data
                     }
                     if (data) {
@@ -150,13 +151,9 @@ class PrefsDrawerFragment :
     private fun showPasswordDialog(runnable: Runnable = Runnable { }) {
         val context = requireContext()
 
-        if (getStoredPassword() == null || getStoredPassword() == "") {
-            val fragment = "com.saggitt.omega.preferences.views.HiddenAppsFragment"
-            PreferencesActivity.startFragment(
-                context,
-                fragment,
-                context.resources.getString(R.string.title__drawer_hide_apps)
-            )
+        val storedPassword = getStoredPassword()
+        if (storedPassword == null || storedPassword == "") {
+            runnable.run()
             return
         }
         val builder = AlertDialog.Builder(context)

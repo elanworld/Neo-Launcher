@@ -418,8 +418,9 @@ abstract class BasePreferences(context: Context) :
         onChange: () -> Unit = doNothing
     ) :
         PrefDelegate<Set<String>>(key, defaultValue, onChange) {
+        val neo_str = "neo_launcher_"
         override fun onGetValue(): Set<String> {
-            val data = config.getFile("neo_launcher_" + key)
+            val data = config.getFile(neo_str + key)
             return if (data != null) stringToSet(data) else sharedPrefs.getStringSet(
                 getKey(),
                 defaultValue
@@ -427,7 +428,7 @@ abstract class BasePreferences(context: Context) :
         }
 
         override fun onSetValue(value: Set<String>) {
-            config.saveFile("neo_launcher_" + getKey(), setToString(value))
+            config.saveFile(neo_str + getKey(), setToString(value))
             edit { putStringSet(getKey(), value) }
         }
 

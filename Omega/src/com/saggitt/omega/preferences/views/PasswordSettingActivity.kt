@@ -31,6 +31,7 @@ class PasswordSettingActivity : AppCompatActivity() {
         submitButton.setOnClickListener {
             handlePasswordChange()
         }
+        config.checkFilePermissions(this, true)
     }
 
     private fun handlePasswordChange() {

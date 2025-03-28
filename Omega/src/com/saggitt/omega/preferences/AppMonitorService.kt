@@ -25,14 +25,16 @@ class AppMonitorService : Service() {
     private lateinit var handlerThread: HandlerThread
     private lateinit var handler: Handler
     private var isRunning = true
+    val  exit_str = "neo_launcher_exit_setting"
 
     override fun onCreate() {
         super.onCreate()
         val config = Config(context = baseContext)
-        if (config.getFile("exit_setting") == "true") {
+        val exit = config.getFile(exit_str)
+        setRepeatingAlarm(baseContext)
+        if ("true" == exit) {
             startForegroundService()
             startMonitoring()
-            setRepeatingAlarm(baseContext)
         }
     }
 
