@@ -5,6 +5,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.launcher3.R
+import com.android.launcher3.Utilities
 import com.saggitt.omega.util.Config
 
 class PasswordSettingActivity : AppCompatActivity() {
@@ -26,8 +27,7 @@ class PasswordSettingActivity : AppCompatActivity() {
         submitButton = findViewById(R.id.submitButton)
 
         // 从存储中获取已存储的密码
-        storedPassword = config.getPassword()
-
+        storedPassword = Utilities.getOmegaPrefs(baseContext)::passwordHidden.get()
         submitButton.setOnClickListener {
             handlePasswordChange()
         }
@@ -50,7 +50,7 @@ class PasswordSettingActivity : AppCompatActivity() {
         }
 
         // 更新密码存储
-        config.savePassword(newPassword)
+        Utilities.getOmegaPrefs(baseContext)::passwordHidden.set(newPassword)
         Toast.makeText(this, "密码设置成功", Toast.LENGTH_SHORT).show()
         finish()
     }

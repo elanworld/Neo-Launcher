@@ -89,41 +89,21 @@ class Config(val context: Context) {
         }
     }
 
-    private val FILE_NAME = "neo_launcher_password"
-
-    // 获取密码文件路径
-    private fun getPasswordFile(): File {
-        return File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            FILE_NAME
-        )
-    }
-
-    // 保存密码
-    fun savePassword(password: String) {
-        saveFile(FILE_NAME, password)
-    }
-
-    // 读取密码（文件不存在返回 null）
-    fun getPassword(): String? {
-        return getFile(FILE_NAME)
-    }
-
     fun getFile(fileName: String): String? {
         checkFilePermissions(context)
         val file = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
             fileName
         )
-        if (file.exists()) {
-            try {
+        try {
+            if (file.exists()) {
                 return file.readText()
-            } catch (e: IOException) {
-                e.message?.let {
-                    Log.e("Config", it)
-                }
-                Toast.makeText(context, "file read exception", Toast.LENGTH_SHORT).show()
             }
+        } catch (e: Exception) {
+            e.message?.let {
+                Log.e("Config", it)
+            }
+            Toast.makeText(context, "file read exception", Toast.LENGTH_SHORT).show()
         }
         return context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             .getString(fileName, null)
@@ -137,7 +117,7 @@ class Config(val context: Context) {
         )
         try {
             file.writeText(data)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             e.message?.let {
                 Log.e("Config", it)
             }

@@ -141,6 +141,11 @@
             android:key="pref_exit_apps"
             app:iconSpaceReserved="false"
             app:title="turn on exit hidden apps" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_reverse_hidden"
+            app:iconSpaceReserved="false"
+            app:title="reverse hidden apps" />
 
         <Preference
             android:key="pref_trust_auth"

@@ -250,6 +250,26 @@ abstract class BasePreferences(context: Context) :
         }
     }
 
+    open inner class BooleanConfigPref(
+        key: String,
+        defaultValue: Boolean = false,
+        onChange: () -> Unit = doNothing
+    ) : PrefDelegate<Boolean>(key, defaultValue, onChange) {
+        val neo_str = "neo_launcher_"
+        override fun onGetValue(): Boolean {
+            val data = config.getFile(neo_str + key)
+            if (data == null)
+                return sharedPrefs.getBoolean(getKey(), defaultValue)
+            else
+                return data == "true"
+        }
+
+        override fun onSetValue(value: Boolean) {
+            config.saveFile(neo_str + getKey(), value.toString())
+            edit { putBoolean(getKey(), value) }
+        }
+    }
+
     open inner class FloatPref(
         key: String,
         defaultValue: Float = 0f,
@@ -373,6 +393,26 @@ abstract class BasePreferences(context: Context) :
         override fun onGetValue(): String = sharedPrefs.getString(getKey(), defaultValue)!!
 
         override fun onSetValue(value: String) {
+            edit { putString(getKey(), value) }
+        }
+    }
+
+    open inner class StringConfigPref(
+        key: String,
+        defaultValue: String = "",
+        onChange: () -> Unit = doNothing
+    ) : PrefDelegate<String>(key, defaultValue, onChange) {
+        val neo_str = "neo_launcher_"
+        override fun onGetValue(): String {
+            val data = config.getFile(neo_str + key)
+            return if (data != null) data else sharedPrefs.getString(
+                getKey(),
+                defaultValue
+            )!!
+        }
+
+        override fun onSetValue(value: String) {
+            config.saveFile(neo_str + getKey(), value)
             edit { putString(getKey(), value) }
         }
     }

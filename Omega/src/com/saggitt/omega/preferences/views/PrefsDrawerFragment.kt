@@ -38,12 +38,10 @@ import com.saggitt.omega.PREFS_PROTECTED_APPS
 import com.saggitt.omega.PREFS_TRUST_APPS
 import com.saggitt.omega.util.Config
 import com.saggitt.omega.util.omegaPrefs
-import java.util.function.LongConsumer
 
 class PrefsDrawerFragment :
     BasePreferenceFragment(R.xml.preferences_drawer, R.string.title__general_drawer) {
     private lateinit var config: Config
-    val exit_str = "neo_launcher_exit_setting"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -62,7 +60,7 @@ class PrefsDrawerFragment :
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
                     val data = newValue as Boolean
                     val runnable = Runnable() {
-                        config.saveFile(exit_str, data.toString())
+                        Utilities.getOmegaPrefs(context)::exitHidden.set(data)
                         isChecked = data
                     }
                     if (data) {
@@ -72,6 +70,19 @@ class PrefsDrawerFragment :
                         isChecked = true // not work
                         showPasswordDialog(runnable)
                     }
+                    true
+                }
+        }
+        findPreference<SwitchPreference>("pref_reverse_hidden")?.apply {
+            onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
+                    val data = newValue as Boolean
+                    val runnable = Runnable() {
+                        Utilities.getOmegaPrefs(context)::reverseHidden.set(data)
+                        isChecked = data
+                    }
+                    isChecked = !data
+                    showPasswordDialog(runnable)
                     true
                 }
         }
@@ -189,7 +200,7 @@ class PrefsDrawerFragment :
     }
 
     private fun getStoredPassword(): String? {
-        return config?.getPassword()
+        return Utilities.getOmegaPrefs(context)::passwordHidden.get()
     }
 
     private fun isDspEnabled(context: Context): Boolean {

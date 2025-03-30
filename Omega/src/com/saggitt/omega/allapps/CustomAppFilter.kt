@@ -21,7 +21,6 @@ package com.saggitt.omega.allapps
 import android.content.ComponentName
 import android.content.Context
 import android.os.UserHandle
-import android.util.Log
 import com.android.launcher3.Utilities
 import com.android.launcher3.util.ComponentKey
 
@@ -30,6 +29,18 @@ class CustomAppFilter(private val mContext: Context) : OmegaAppFilter(mContext) 
     override fun shouldShowApp(componentName: ComponentName?, user: UserHandle?): Boolean {
         return super.shouldShowApp(componentName, user)
                 && (user == null || !isHiddenApp(mContext, ComponentKey(componentName, user)))
+    }
+
+    fun isHiddenApp(context: Context, key: ComponentKey?): Boolean {
+        val reverseHidden = Utilities.getOmegaPrefs(context)::reverseHidden
+        val contains = getHiddenApps(context).contains(key.toString())
+        return if (reverseHidden.get()) !contains else contains
+    }
+
+    fun isHiddenPackage(context: Context, packageName: String): Boolean {
+        val reverseHidden = Utilities.getOmegaPrefs(context)::reverseHidden
+        val contains = getHiddenApps(context).filter { it.contains(packageName) }.size
+        return if (reverseHidden.get()) contains == 0 else contains > 0
     }
 
     companion object {
@@ -45,7 +56,7 @@ class CustomAppFilter(private val mContext: Context) : OmegaAppFilter(mContext) 
         }
 
         fun isHiddenApp(context: Context, key: ComponentKey?): Boolean {
-            return getHiddenApps(context).contains(key.toString())
+            return !getHiddenApps(context).contains(key.toString())
         }
 
         private fun getHiddenApps(context: Context): MutableSet<String> {
