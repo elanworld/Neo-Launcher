@@ -113,9 +113,9 @@ class AppMonitorService : Service() {
     }
     fun forceStopApp(packageName: String) {
         try {
-            Log.w("root", "kill $packageName")
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "am force-stop $packageName"))
             process.waitFor()
+            Log.w("root", "kill $packageName")
         } catch (e: Exception) {
             e.message?.let { Log.e("root", it) }
         }

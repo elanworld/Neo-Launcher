@@ -150,7 +150,7 @@ class Config(val context: Context) {
             )
             try {
                 file.writeText(file.toString())
-            } catch (ex: IOException) {
+            } catch (ex: Exception) {
                 startPermissionAc()
             }
         }

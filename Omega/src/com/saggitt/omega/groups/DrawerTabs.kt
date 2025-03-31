@@ -238,7 +238,6 @@ abstract class DrawerTabs(manager: AppGroupsManager, type: AppGroupsManager.Cate
                     .filter { !predicate(it) })
             hiddenSet.addAll(hidden)
             prefs.hiddenAppSet = hiddenSet.map(ComponentKey::toString).toSet()
-            prefs.hiddenPackageSet = hiddenSet.map{it.componentName.packageName}.toSet()
         }
 
         override fun clone(): Group.Customization<Collection<ComponentKey>, Boolean> {

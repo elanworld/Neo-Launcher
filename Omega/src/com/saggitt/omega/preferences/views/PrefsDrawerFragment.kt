@@ -38,6 +38,9 @@ import com.saggitt.omega.PREFS_PROTECTED_APPS
 import com.saggitt.omega.PREFS_TRUST_APPS
 import com.saggitt.omega.util.Config
 import com.saggitt.omega.util.omegaPrefs
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.Callable
+import kotlin.coroutines.resume
 
 class PrefsDrawerFragment :
     BasePreferenceFragment(R.xml.preferences_drawer, R.string.title__general_drawer) {
@@ -49,8 +52,11 @@ class PrefsDrawerFragment :
         findPreference<SwitchPreference>(PREFS_PROTECTED_APPS)?.apply {
             onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    requireActivity().omegaPrefs.enableProtectedApps = newValue as Boolean
-                    true
+                    showPasswordDialog {
+                        requireActivity().omegaPrefs.enableProtectedApps = newValue as Boolean
+                        isChecked = newValue
+                    }
+                    false
                 }
 
             isVisible = Utilities.ATLEAST_R
@@ -63,14 +69,8 @@ class PrefsDrawerFragment :
                         Utilities.getOmegaPrefs(context)::exitHidden.set(data)
                         isChecked = data
                     }
-                    if (data) {
-                        runnable.run()
-                        requestUsagePermission(context)
-                    } else {
-                        isChecked = true // not work
-                        showPasswordDialog(runnable)
-                    }
-                    true
+                    showPasswordDialog(runnable)
+                    false
                 }
         }
         findPreference<SwitchPreference>("pref_reverse_hidden")?.apply {
@@ -81,16 +81,14 @@ class PrefsDrawerFragment :
                         Utilities.getOmegaPrefs(context)::reverseHidden.set(data)
                         isChecked = data
                     }
-                    isChecked = !data
                     showPasswordDialog(runnable)
-                    true
+                    false
                 }
         }
 
         findPreference<Preference>(PREFS_TRUST_APPS)?.apply {
             onPreferenceClickListener = Preference.OnPreferenceClickListener {
                 val runnable = Runnable() {
-                    // 密码正确，启动目标Fragment
                     val fragment = "com.saggitt.omega.preferences.views.HiddenAppsFragment"
                     PreferencesActivity.startFragment(
                         requireContext(),

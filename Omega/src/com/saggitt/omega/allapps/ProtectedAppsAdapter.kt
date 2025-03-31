@@ -173,6 +173,7 @@ abstract class ProtectedAppsAdapter(
 
             override fun setSelections(selections: Set<ComponentKey>) {
                 property.set(HashSet(selections.map { it.toString() }))
+                Utilities.getOmegaPrefs(context)::hiddenPackageSet.set(selections.map { it.componentName.packageName }.toSet())
             }
 
             override fun getInitialProtected() =

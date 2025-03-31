@@ -4,6 +4,7 @@ on:
     branches: [ A-12 ]
   pull_request:
     branches: [ A-12 ]
+  workflow_dispatch:
 
 jobs:
 #  send-start-notification:
