@@ -77,7 +77,7 @@ class AppMonitorService : Service() {
                                     && omegaAppFilter.shouldShowApp( it.componentName,null) // 非本app包
                         } else false
                     }
-                    if (size > 0) {
+                    if (size > 0 || !appsList.map { it.componentName.packageName }.contains(foregroundApp)) {
                         goHome()
                         if (foregroundApp != null) {
                             forceStopApp(foregroundApp)
